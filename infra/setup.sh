@@ -11,6 +11,7 @@ DATASET="wubba_lubba"
 TABLE="wubba_metrics"
 SCHEDULER_JOB="wubba-lubba-trigger"
 FUNCTION_NAME="wubba-lubba-publisher"
+STAGING_BUCKET="${PROJECT_ID}-dataflow-temp"
 
 echo "==> Using project: $PROJECT_ID, region: $REGION"
 gcloud config set project "$PROJECT_ID"
@@ -24,6 +25,10 @@ gcloud services enable \
   cloudfunctions.googleapis.com \
   cloudscheduler.googleapis.com \
   cloudbuild.googleapis.com
+
+# ── GCS bucket (Dataflow staging/temp) ─────────────────────────
+echo "==> Creating GCS bucket for Dataflow staging..."
+gsutil mb -l "$REGION" "gs://$STAGING_BUCKET" 2>/dev/null || echo "    Bucket already exists"
 
 # ── Pub/Sub ────────────────────────────────────────────────────
 echo "==> Creating Pub/Sub topic and subscription..."
@@ -76,6 +81,7 @@ echo "==> Setup complete."
 echo "    Topic:        $TOPIC"
 echo "    Subscription: $SUBSCRIPTION"
 echo "    BQ table:     $DATASET.$TABLE"
+echo "    GCS bucket:   gs://$STAGING_BUCKET"
 echo "    Scheduler:    $SCHEDULER_JOB (every 1 min)"
 echo ""
 echo "Next steps:"
