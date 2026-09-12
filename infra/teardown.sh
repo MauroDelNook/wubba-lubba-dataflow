@@ -11,6 +11,7 @@ DATASET="wubba_lubba"
 TABLE="wubba_metrics"
 SCHEDULER_JOB="wubba-lubba-trigger"
 FUNCTION_NAME="wubba-lubba-publisher"
+STAGING_BUCKET="${PROJECT_ID}-dataflow-temp"
 
 echo "==> Using project: $PROJECT_ID, region: $REGION"
 gcloud config set project "$PROJECT_ID"
@@ -59,6 +60,10 @@ gcloud pubsub topics delete "$TOPIC" \
 echo "==> Deleting BigQuery table and dataset..."
 bq rm -f -t "$PROJECT_ID:$DATASET.$TABLE" 2>/dev/null || echo "    Table not found"
 bq rm -f -d "$PROJECT_ID:$DATASET" 2>/dev/null || echo "    Dataset not found"
+
+# ── GCS bucket ───────────────────────────────────────────────
+echo "==> Deleting GCS staging bucket..."
+gsutil rm -r "gs://$STAGING_BUCKET" 2>/dev/null || echo "    Bucket not found"
 
 echo ""
 echo "==> Teardown complete."
