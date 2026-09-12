@@ -39,12 +39,46 @@ python pipeline/pipeline.py \
   --region=$GCP_REGION \
   --temp_location=gs://$GCP_PROJECT_ID-dataflow-temp/tmp \
   --staging_location=gs://$GCP_PROJECT_ID-dataflow-temp/staging \
+  --requirements_file=requirements.txt \
   --max_num_workers=1 \
   --machine_type=n1-standard-1
 
 # When done, drain the job and tear everything down
 bash infra/teardown.sh
 ```
+
+## Pausing and Resuming
+
+Streaming Dataflow jobs bill continuously. When you step away, stop the pipeline and the scheduler:
+
+```bash
+# 1. Cancel the Dataflow job
+gcloud dataflow jobs list --region=$GCP_REGION --status=active
+gcloud dataflow jobs cancel <JOB_ID> --region=$GCP_REGION
+
+# 2. Pause the scheduler so the Cloud Function stops firing
+gcloud scheduler jobs pause wubba-lubba-trigger --location=$GCP_REGION
+```
+
+To pick it back up:
+
+```bash
+# 1. Resume the scheduler
+gcloud scheduler jobs resume wubba-lubba-trigger --location=$GCP_REGION
+
+# 2. Redeploy the pipeline
+python pipeline/pipeline.py \
+  --project=$GCP_PROJECT_ID \
+  --runner=DataflowRunner \
+  --region=$GCP_REGION \
+  --temp_location=gs://$GCP_PROJECT_ID-dataflow-temp/tmp \
+  --staging_location=gs://$GCP_PROJECT_ID-dataflow-temp/staging \
+  --requirements_file=requirements.txt \
+  --max_num_workers=1 \
+  --machine_type=n1-standard-1
+```
+
+Any messages that queued in Pub/Sub while paused will be processed when the pipeline starts back up.
 
 ## Cost
 

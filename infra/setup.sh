@@ -24,7 +24,8 @@ gcloud services enable \
   bigquery.googleapis.com \
   cloudfunctions.googleapis.com \
   cloudscheduler.googleapis.com \
-  cloudbuild.googleapis.com
+  cloudbuild.googleapis.com \
+  run.googleapis.com
 
 # ── GCS bucket (Dataflow staging/temp) ─────────────────────────
 echo "==> Creating GCS bucket for Dataflow staging..."
@@ -52,12 +53,13 @@ gcloud functions deploy "$FUNCTION_NAME" \
   --gen2 \
   --region="$REGION" \
   --runtime=python312 \
-  --source=../publisher \
+  --source=./publisher \
   --entry-point=publish_wubba \
   --trigger-http \
   --allow-unauthenticated \
   --memory=256MB \
   --timeout=60s \
+  --set-env-vars="GCP_PROJECT_ID=$PROJECT_ID,PUBSUB_TOPIC=$TOPIC" \
   --quiet
 
 FUNCTION_URL=$(gcloud functions describe "$FUNCTION_NAME" \
