@@ -25,26 +25,32 @@ TABLE_SCHEMA = {
 
 class ParseMessage(beam.DoFn):
     def process(self, element):
+        import json as _json
+        import logging as _logging
+        from apache_beam.transforms.window import TimestampedValue
+        from apache_beam.utils.timestamp import Timestamp
+        _logger = _logging.getLogger(__name__)
         try:
-            record = json.loads(element.decode("utf-8"))
+            record = _json.loads(element.decode("utf-8"))
             ts = record["timestamp"]
-            yield TimestampedValue(record, beam.utils.timestamp.Timestamp.from_rfc3339(ts))
-        except (json.JSONDecodeError, KeyError) as e:
-            logger.warning("Skipping malformed message: %s", e)
+            rfc3339_ts = ts.replace("+00:00", "Z")
+            yield TimestampedValue(record, Timestamp.from_rfc3339(rfc3339_ts))
+        except (ValueError, KeyError) as e:
+            _logger.warning("Skipping malformed message: %s", e)
 
 
 class AggregateWindow(beam.DoFn):
     def process(self, element, window=beam.DoFn.WindowParam):
         timestamps = [msg["timestamp"] for msg in element]
         count = len(timestamps)
-        window_start = window.start.to_utc_datetime().isoformat()
-        window_end = window.end.to_utc_datetime().isoformat()
-        window_duration_sec = (window.end - window.start).total_seconds()
+        window_start_dt = window.start.to_utc_datetime()
+        window_end_dt = window.end.to_utc_datetime()
+        window_duration_sec = (window_end_dt - window_start_dt).total_seconds()
         avg_rate = count / window_duration_sec if window_duration_sec > 0 else 0.0
 
         yield {
-            "window_start": window_start,
-            "window_end": window_end,
+            "window_start": window_start_dt.isoformat(),
+            "window_end": window_end_dt.isoformat(),
             "message_count": count,
             "avg_rate_per_sec": round(avg_rate, 4),
             "min_timestamp": min(timestamps),
@@ -62,6 +68,7 @@ def run(argv=None):
 
     known_args, pipeline_args = parser.parse_known_args(argv)
 
+    pipeline_args.extend(["--project", known_args.project])
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(StandardOptions).streaming = True
 
