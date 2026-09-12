@@ -16,5 +16,6 @@
 - `publisher/requirements.txt` for Cloud Function dependencies
 - Pause/resume instructions in README
 - `--requirements_file` flag to README deploy command
+- `docs/how-dataflow-works.md` learning guide covering Beam, windows, triggers, and gotchas
 - GCS staging bucket (`gs://{PROJECT_ID}-dataflow-temp`) to `infra/setup.sh`
 - Bucket cleanup to `infra/teardown.sh`

@@ -95,6 +95,8 @@ wubba-lubba-dataflow/
 │   └── main.py           # Cloud Function: 2-10 random messages per invocation
 ├── pipeline/
 │   └── pipeline.py       # Apache Beam streaming pipeline
+├── docs/
+│   └── how-dataflow-works.md  # learning guide: Beam, windows, triggers, gotchas
 ├── dashboard/
 │   └── README.md         # Looker Studio setup instructions
 └── requirements.txt
